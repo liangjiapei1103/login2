@@ -217,6 +217,7 @@ module.exports = function (passport) {
 				// if the user is found, then log them in
 				if (user) {
 					// update info every time login
+					alert(profile);
 					user.twitter.id          = profile.id;
                     user.twitter.token       = token;
                     user.twitter.username    = profile.username;
