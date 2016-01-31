@@ -130,64 +130,87 @@ module.exports = function (passport) {
 		clientID: configAuth.facebookAuth.clientID,
 		clientSecret: configAuth.facebookAuth.clientSecret,
 		callbackURL: configAuth.facebookAuth.callbackURL,
-		profileFields: ['email', 'displayName', 'photos', 'gender', 'birthday']
+		profileFields: ['email', 'displayName', 'photos', 'gender', 'birthday'],
+		passReqToCallback: true // allow us to pass in the req from our route ( let us check if a user is logged in or not)
 	},
 
 	// facebook will send back the token and profile
-	function (token, refreshToken, profile, callback) {
+	function (req, token, refreshToken, profile, callback) {
 
 		// asynchronous
 		process.nextTick(function () {
 
-			// find the user in the database based on their facebook id
-			User.findOne({ 'facebook.id': profile.id }, function (err, user) {
+			if (!req.user) {
 
-				// if there is an error, stop everything and return that
-				// ie an error connecting to the database
-				if (err) 
-					return callback(err);
+				// find the user in the database based on their facebook id
+				User.findOne({ 'facebook.id': profile.id }, function (err, user) {
 
-				// if the user is found, then log them in
-				if (user) {
-					// update info every time login
-					user.facebook.id = profile.id; // set the users facebook id                   
-                    user.facebook.token = token; // we will save the token that facebook provides to the user                    
-                    user.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
-                    user.facebook.name = profile.displayName;
-                    user.facebook.picture = profile.photos[0].value;
-                    user.facebook.gender = profile.gender;
+					// if there is an error, stop everything and return that
+					// ie an error connecting to the database
+					if (err) 
+						return callback(err);
 
-                    user.save(function (err) {
-                    	if (err) 
-                    		throw err;
+					// if the user is found, then log them in
+					if (user) {
+						// update info every time login
+						user.facebook.id = profile.id; // set the users facebook id                   
+	                    user.facebook.token = token; // we will save the token that facebook provides to the user                    
+	                    user.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+	                    user.facebook.name = profile.displayName;
+	                    user.facebook.picture = profile.photos[0].value;
+	                    user.facebook.gender = profile.gender;
 
-                    	// if successful, return the new user
-                    	return callback(null, user);
-                    });
-					// return callback(null, user); // user found, return that user
-				} else {
-					// if there is no user found with that facebook id, create them
-					var newUser = new User();
+	                    user.save(function (err) {
+	                    	if (err) 
+	                    		throw err;
 
-					// set all of the facebook information in our user model
-					newUser.facebook.id = profile.id; // set the users facebook id                   
-                    newUser.facebook.token = token; // we will save the token that facebook provides to the user                    
-                    newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
-                    newUser.facebook.name = profile.displayName;
-                    newUser.facebook.picture = profile.photos[0].value;
-                    newUser.facebook.gender = profile.gender;
+	                    	// if successful, return the new user
+	                    	return callback(null, user);
+	                    });
+						// return callback(null, user); // user found, return that user
+					} else {
+						// if there is no user found with that facebook id, create them
+						var newUser = new User();
 
-                    // save our user to the database
-                    newUser.save(function (err) {
-                    	if (err) 
-                    		throw err;
+						// set all of the facebook information in our user model
+						newUser.facebook.id = profile.id; // set the users facebook id                   
+	                    newUser.facebook.token = token; // we will save the token that facebook provides to the user                    
+	                    newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+	                    newUser.facebook.name = profile.displayName;
+	                    newUser.facebook.picture = profile.photos[0].value;
+	                    newUser.facebook.gender = profile.gender;
 
-                    	// if successful, return the new user
-                    	return callback(null, newUser);
-                    });
-				}
+	                    // save our user to the database
+	                    newUser.save(function (err) {
+	                    	if (err) 
+	                    		throw err;
 
-			});
+	                    	// if successful, return the new user
+	                    	return callback(null, newUser);
+	                    });
+					}
+
+				});
+
+			} else {
+				// user already exists and is logged in, we have to link accounts
+                var user = req.user; // pull the user out of the session
+
+                // update the current users facebook credentials
+                user.facebook.id = profile.id; // set the users facebook id                   
+                user.facebook.token = token; // we will save the token that facebook provides to the user                    
+                user.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+                user.facebook.name = profile.displayName;
+                user.facebook.picture = profile.photos[0].value;
+                user.facebook.gender = profile.gender;
+
+                // save the user
+                user.save(function(err) {
+                    if (err)
+                        throw err;
+                    return callback(null, user);
+                });
+			}		
 
 		});
 	}));
