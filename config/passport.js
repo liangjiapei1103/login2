@@ -222,66 +222,84 @@ module.exports = function (passport) {
 		consumerKey: configAuth.twitterAuth.consumerKey,
 		consumerSecret: configAuth.twitterAuth.consumerSecret,
 		callbackURL     : configAuth.twitterAuth.callbackURL
+		passReqToCallback: true // allow us to pass in the req from our route ( let us check if a user is logged in or not)
 	},
 
 	// facebook will send back the token and profile
-	function (token, tokenSecret, profile, callback) {
+	function (req, token, tokenSecret, profile, callback) {
 
 		// asynchronous
 		process.nextTick(function () {
 
-			// find the user in the database based on their facebook id
-			User.findOne({ 'twitter.id': profile.id }, function (err, user) {
+			if (!req.user) {
 
-				// if there is an error, stop everything and return that
-				// ie an error connecting to the database
-				if (err) 
-					return callback(err);
+				// find the user in the database based on their facebook id
+				User.findOne({ 'twitter.id': profile.id }, function (err, user) {
 
-				// if the user is found, then log them in
-				if (user) {
-					// update info every time login
-					console.log(profile);
-					user.twitter.id          = profile.id;
-                    user.twitter.token       = token;
-                    user.twitter.username    = profile.username;
-                    user.twitter.displayName = profile.displayName;
-                    user.twitter.picture = profile.photos[0].value;
+					// if there is an error, stop everything and return that
+					// ie an error connecting to the database
+					if (err) 
+						return callback(err);
 
-
-                    user.save(function (err) {
-                    	if (err) 
-                    		throw err;
-
-                    	// if successful, return the new user
-                    	return callback(null, user);
-                    });
-					// return callback(null, user); // user found, return that user
-				} else {
-					// if there is no user found with that facebook id, create them
-					var newUser = new User();
-
-					// set all of the user data that we need
-					console.log(profile);
-                    newUser.twitter.id          = profile.id;
-                    newUser.twitter.token       = token;
-                    newUser.twitter.username    = profile.username;
-                    newUser.twitter.displayName = profile.displayName;
-                    newUser.twitter.picture = profile.photos[0].value;
+					// if the user is found, then log them in
+					if (user) {
+						// update info every time login
+						user.twitter.id          = profile.id;
+	                    user.twitter.token       = token;
+	                    user.twitter.username    = profile.username;
+	                    user.twitter.displayName = profile.displayName;
+	                    user.twitter.picture = profile.photos[0].value;
 
 
-                    // save our user to the database
-                    newUser.save(function (err) {
-                    	if (err) 
-                    		throw err;
+	                    user.save(function (err) {
+	                    	if (err) 
+	                    		throw err;
 
-                    	// if successful, return the new user
-                    	return callback(null, newUser);
-                    });
-				}
+	                    	// if successful, return the new user
+	                    	return callback(null, user);
+	                    });
+						// return callback(null, user); // user found, return that user
+					} else {
+						// if there is no user found with that facebook id, create them
+						var newUser = new User();
 
-			});
+						// set all of the user data that we need
+	                    newUser.twitter.id          = profile.id;
+	                    newUser.twitter.token       = token;
+	                    newUser.twitter.username    = profile.username;
+	                    newUser.twitter.displayName = profile.displayName;
+	                    newUser.twitter.picture = profile.photos[0].value;
 
+
+	                    // save our user to the database
+	                    newUser.save(function (err) {
+	                    	if (err) 
+	                    		throw err;
+
+	                    	// if successful, return the new user
+	                    	return callback(null, newUser);
+	                    });
+					}
+
+				});
+			} else {
+
+				// update info every time login
+				user.twitter.id          = profile.id;
+                user.twitter.token       = token;
+                user.twitter.username    = profile.username;
+                user.twitter.displayName = profile.displayName;
+                user.twitter.picture = profile.photos[0].value;
+
+
+                user.save(function (err) {
+                	if (err) 
+                		throw err;
+
+                	// if successful, return the new user
+                	return callback(null, user);
+                });
+			}
 		});
 	}));
 
@@ -292,54 +310,72 @@ module.exports = function (passport) {
         clientID        : configAuth.googleAuth.clientID,
         clientSecret    : configAuth.googleAuth.clientSecret,
         callbackURL     : configAuth.googleAuth.callbackURL,
-
+        passReqToCallback: true // allow us to pass in the req from our route ( let us check if a user is logged in or not)
     },
-    function(token, refreshToken, profile, callback) {
-
+    function (req, token, refreshToken, profile, callback) {
+ 
         // make the code asynchronous
         // User.findOne won't fire until we have all our data back from Google
         process.nextTick(function() {
 
-            // try to find the user based on their google id
-            User.findOne({ 'google.id' : profile.id }, function(err, user) {
-                if (err)
-                    return callback(err);
+        	if (!req.user) {
 
-                if (user) {
+	            // try to find the user based on their google id
+	            User.findOne({ 'google.id' : profile.id }, function(err, user) {
+	                if (err)
+	                    return callback(err);
 
-                	user.google.id    = profile.id;
-                    user.google.token = token;
-                    user.google.name  = profile.displayName;
-                    user.google.email = profile.emails[0].value; // pull the first email
+	                if (user) {
 
-                    user.save(function (err) {
-                    	if (err) 
-                    		throw err;
+	                	user.google.id    = profile.id;
+	                    user.google.token = token;
+	                    user.google.name  = profile.displayName;
+	                    user.google.email = profile.emails[0].value; // pull the first email
 
-                    	// if successful, return the new user
-                    	return callback(null, user);
-                    });
+	                    user.save(function (err) {
+	                    	if (err) 
+	                    		throw err;
 
-                    // if a user is found, log them in
-                    // return done(null, user);
-                } else {
-                    // if the user isnt in our database, create a new user
-                    var newUser = new User();
+	                    	// if successful, return the new user
+	                    	return callback(null, user);
+	                    });
 
-                    // set all of the relevant information
-                    newUser.google.id    = profile.id;
-                    newUser.google.token = token;
-                    newUser.google.name  = profile.displayName;
-                    newUser.google.email = profile.emails[0].value; // pull the first email
+	                    // if a user is found, log them in
+	                    // return done(null, user);
+	                } else {
+	                    // if the user isnt in our database, create a new user
+	                    var newUser = new User();
 
-                    // save the user
-                    newUser.save(function(err) {
-                        if (err)
-                            throw err;
-                        return callback(null, newUser);
-                    });
-                }
-            });
+	                    // set all of the relevant information
+	                    newUser.google.id    = profile.id;
+	                    newUser.google.token = token;
+	                    newUser.google.name  = profile.displayName;
+	                    newUser.google.email = profile.emails[0].value; // pull the first email
+
+	                    // save the user
+	                    newUser.save(function(err) {
+	                        if (err)
+	                            throw err;
+	                        return callback(null, newUser);
+	                    });
+	                }
+	            });
+			} else {
+
+				user.google.id    = profile.id;
+                user.google.token = token;
+                user.google.name  = profile.displayName;
+                user.google.email = profile.emails[0].value; // pull the first email
+
+                user.save(function (err) {
+                	if (err) 
+                		throw err;
+
+                	// if successful, return the new user
+                	return callback(null, user);
+                });
+				
+			}
         });
 
     }));
