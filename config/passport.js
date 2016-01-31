@@ -98,27 +98,45 @@ module.exports = function (passport) {
 	},
 	function (req, email, password, callback) { // callback with email and password from our form
 
-		// find a user whose email is the same as the forms email
-        // we are checking to see if the user trying to login already exists
-        User.findOne({ 'local.email': email }, function (err, user) {
 
-        	// if there are any errors, return the error before anything else
-        	if (err) 
-        		return callback(err);
+		if (!req.user) {
 
-        	// if no user is found, reutrn the message
-        	if (!user) 
-        		return callback(null, false, req.flash('loginMessage', 'No user found.'));
-        		// req.flash is the way to set flashdata using connect-flash
+			// find a user whose email is the same as the forms email
+	        // we are checking to see if the user trying to login already exists
+	        User.findOne({ 'local.email': email }, function (err, user) {
 
-        	// if the user is found but the password is wrong
-        	if (!user.validPassword(password))
-        		return callback(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
-        		// create the loginMessage and save it to session as flashdata
+	        	// if there are any errors, return the error before anything else
+	        	if (err) 
+	        		return callback(err);
 
-        	// all is well, return successful user
-        	return callback(null, user);
-        });
+	        	// if no user is found, reutrn the message
+	        	if (!user) 
+	        		return callback(null, false, req.flash('loginMessage', 'No user found.'));
+	        		// req.flash is the way to set flashdata using connect-flash
+
+	        	// if the user is found but the password is wrong
+	        	if (!user.validPassword(password))
+	        		return callback(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
+	        		// create the loginMessage and save it to session as flashdata
+
+	        	// all is well, return successful user
+	        	return callback(null, user);
+	        });
+
+    	} else {
+    		var user = req.user;
+
+    		user.local.email = email;
+			user.local.password = newUser.generateHash(password);
+
+			user.save(function (err) {
+	        	if (err) 
+	        		throw err;
+
+	        	// if successful, return the new user
+	        	return callback(null, user);
+            });
+    	}
 
 	}));
 
