@@ -285,6 +285,9 @@ module.exports = function (passport) {
 				});
 			} else {
 
+				// user already exists and is logged in, we have to link accounts
+                var user = req.user; // pull the user out of the session
+
 				// update info every time login
 				user.twitter.id          = profile.id;
                 user.twitter.token       = token;
@@ -362,6 +365,9 @@ module.exports = function (passport) {
 	                }
 	            });
 			} else {
+
+				// user already exists and is logged in, we have to link accounts
+                var user = req.user; // pull the user out of the session
 
 				user.google.id    = profile.id;
                 user.google.token = token;
