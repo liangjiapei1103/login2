@@ -125,7 +125,7 @@ module.exports = function (passport) {
 
 	passport.use(new FacebookStrategy({
 		// pull in our app id and secret from our auth.js file
-		clientId: configAuth.facebookAuth.clientId,
+		clientID: configAuth.facebookAuth.clientID,
 		clientSecret: configAuth.facebookAuth.clientSecret,
 		callbackURL: configAuth.facebookAuth.callbackURL,
 		profileFields: ['email', 'displayName', 'photos', 'gender', 'birthday']
@@ -147,7 +147,22 @@ module.exports = function (passport) {
 
 				// if the user is found, then log them in
 				if (user) {
-					return callback(null, user); // user found, return that user
+					// update info every time login
+					user.facebook.id = profile.id; // set the users facebook id                   
+                    user.facebook.token = token; // we will save the token that facebook provides to the user                    
+                    user.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+                    user.facebook.name = profile.displayName;
+                    user.facebook.picture = profile.photos[0].value;
+                    user.facebook.gender = profile.gender;
+
+                    user.save(function (err) {
+                    	if (err) 
+                    		throw err;
+
+                    	// if successful, return the new user
+                    	return callback(null, user);
+                    });
+					// return callback(null, user); // user found, return that user
 				} else {
 					// if there is no user found with that facebook id, create them
 					var newUser = new User();
