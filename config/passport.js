@@ -3,6 +3,7 @@
 // load all the things we need
 var LocalStrategy = require('passport-local').Strategy;
 var FacebookStrategy = require('passport-facebook').Strategy;
+var TwitterStrategy = require('passport-twitter').Strategy;
 
 // load up the user model
 var User = require('../app/models/user');
@@ -189,4 +190,69 @@ module.exports = function (passport) {
 
 		});
 	}));
+
+	// Twitter Login ========================================
+
+	passport.use(new TwitterStrategy({
+		// pull in our app id and secret from our auth.js file
+		consumerKey: configAuth.twitterAuth.consumerKey,
+		consumerSecret: configAuth.twitterAuth.consumerSecret,
+		callbackURL     : configAuth.twitterAuth.callbackURL
+	},
+
+	// facebook will send back the token and profile
+	function (token, tokenSecret, profile, callback) {
+
+		// asynchronous
+		process.nextTick(function () {
+
+			// find the user in the database based on their facebook id
+			User.findOne({ 'twitter.id': profile.id }, function (err, user) {
+
+				// if there is an error, stop everything and return that
+				// ie an error connecting to the database
+				if (err) 
+					return callback(err);
+
+				// if the user is found, then log them in
+				if (user) {
+					// update info every time login
+					user.twitter.id          = profile.id;
+                    user.twitter.token       = token;
+                    user.twitter.username    = profile.username;
+                    user.twitter.displayName = profile.displayName;
+
+                    user.save(function (err) {
+                    	if (err) 
+                    		throw err;
+
+                    	// if successful, return the new user
+                    	return callback(null, user);
+                    });
+					// return callback(null, user); // user found, return that user
+				} else {
+					// if there is no user found with that facebook id, create them
+					var newUser = new User();
+
+					// set all of the user data that we need
+                    newUser.twitter.id          = profile.id;
+                    newUser.twitter.token       = token;
+                    newUser.twitter.username    = profile.username;
+                    newUser.twitter.displayName = profile.displayName;
+
+                    // save our user to the database
+                    newUser.save(function (err) {
+                    	if (err) 
+                    		throw err;
+
+                    	// if successful, return the new user
+                    	return callback(null, newUser);
+                    });
+				}
+
+			});
+
+		});
+	}));
+
 };

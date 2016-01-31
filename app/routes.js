@@ -50,6 +50,19 @@ module.exports = function(app, passport) {
 		failureRedirect: '/'
 	}));
 
+
+	// Twitter routes =======================================
+	app.get('/auth/twitter', passport.authenticate('twitter'));
+
+    // handle the callback after twitter has authenticated the user
+    app.get('/auth/twitter/callback',
+        passport.authenticate('twitter', {
+            successRedirect : '/profile',
+            failureRedirect : '/'
+        })
+    );
+
+
 	// logout ================================================
 	app.get('/logout', function (req, res) {
 		req.logout();
