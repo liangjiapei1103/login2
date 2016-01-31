@@ -221,7 +221,7 @@ module.exports = function (passport) {
 		// pull in our app id and secret from our auth.js file
 		consumerKey: configAuth.twitterAuth.consumerKey,
 		consumerSecret: configAuth.twitterAuth.consumerSecret,
-		callbackURL     : configAuth.twitterAuth.callbackURL
+		callbackURL     : configAuth.twitterAuth.callbackURL,
 		passReqToCallback: true // allow us to pass in the req from our route ( let us check if a user is logged in or not)
 	},
 
@@ -374,7 +374,7 @@ module.exports = function (passport) {
                 	// if successful, return the new user
                 	return callback(null, user);
                 });
-				
+
 			}
         });
 
