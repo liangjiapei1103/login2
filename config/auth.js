@@ -16,9 +16,9 @@ module.exports = {
     },
 
     'googleAuth' : {
-        'clientID'      : 'your-secret-clientID-here',
-        'clientSecret'  : 'your-client-secret-here',
-        'callbackURL'   : 'http://localhost:8080/auth/google/callback'
+        'clientID'      : '406504633631-kt32r7qmvb3hp8ckuke743aqa7mpkt2n.apps.googleusercontent.com',
+        'clientSecret'  : 'yWNjeTDdruJb2INZjc1hs_Ya',
+        'callbackURL'   : 'https://jiapei-login-system.herokuapp.com/auth/google/callback'
     }
 
 };
