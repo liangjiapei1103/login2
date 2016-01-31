@@ -222,6 +222,8 @@ module.exports = function (passport) {
                     user.twitter.token       = token;
                     user.twitter.username    = profile.username;
                     user.twitter.displayName = profile.displayName;
+                    user.twitter.picture = profile.photos[0].value;
+
 
                     user.save(function (err) {
                     	if (err) 
@@ -241,6 +243,7 @@ module.exports = function (passport) {
                     newUser.twitter.token       = token;
                     newUser.twitter.username    = profile.username;
                     newUser.twitter.displayName = profile.displayName;
+                    newUser.twitter.picture = profile.photos[0].value;
 
 
                     // save our user to the database
