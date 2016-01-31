@@ -152,6 +152,7 @@ module.exports = function (passport) {
 
 					// if the user is found, then log them in
 					if (user) {
+
 						// update info every time login
 						user.facebook.id = profile.id; // set the users facebook id                   
 	                    user.facebook.token = token; // we will save the token that facebook provides to the user                    

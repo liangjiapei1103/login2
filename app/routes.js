@@ -129,6 +129,47 @@ module.exports = function(app, passport) {
 	    })
     );
 
+
+
+	// unlink accounts ======================================
+
+	// local -----------------------------------
+    app.get('/unlink/local', function(req, res) {
+        var user            = req.user;
+        user.local.email    = undefined;
+        user.local.password = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+    // facebook -------------------------------
+    app.get('/unlink/facebook', function(req, res) {
+        var user            = req.user;
+        user.facebook.token = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+    // twitter --------------------------------
+    app.get('/unlink/twitter', function(req, res) {
+        var user           = req.user;
+        user.twitter.token = undefined;
+        user.save(function(err) {
+           res.redirect('/profile');
+        });
+    });
+
+    // google ---------------------------------
+    app.get('/unlink/google', function(req, res) {
+        var user          = req.user;
+        user.google.token = undefined;
+        user.save(function(err) {
+           res.redirect('/profile');
+        });
+    });
+
 };    
 
 // route middleware to make sure a user is logged in
